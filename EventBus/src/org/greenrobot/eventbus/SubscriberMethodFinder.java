@@ -148,15 +148,21 @@ class SubscriberMethodFinder {
     }
 
     private void findUsingReflectionInSingleClass(FindState findState) {
-        Method[] methods;
+        Method[] methods = null;
         try {
             // This is faster than getMethods, especially when subscribers are fat classes like Activities
             methods = findState.clazz.getDeclaredMethods();
         } catch (Throwable th) {
-            // Workaround for java.lang.NoClassDefFoundError, see https://github.com/greenrobot/EventBus/issues/149
-            methods = findState.clazz.getMethods();
-            findState.skipSuperClasses = true;
+            try {
+                // Workaround for java.lang.NoClassDefFoundError, see https://github.com/greenrobot/EventBus/issues/149
+                methods = findState.clazz.getMethods();
+                findState.skipSuperClasses = true;
+            } catch (Throwable th2) {
+                //catched for good
+            }
         }
+        if(methods == null)
+            return;
         for (Method method : methods) {
             int modifiers = method.getModifiers();
             if ((modifiers & Modifier.PUBLIC) != 0 && (modifiers & MODIFIERS_IGNORE) == 0) {
